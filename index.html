@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechNode - Portal Berita Teknologi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            scroll-behavior: smooth;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.2);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #38bdf8;
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Modal & Toast Styling */
+        .notification-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: #0ea5e9;
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            display: none;
+            z-index: 100;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Search Overlay */
+        #searchOverlay {
+            display: none;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Notifikasi Popup (Custom Alert) -->
+    <div id="toast" class="notification-toast font-semibold">
+        <i class="fas fa-info-circle mr-2"></i> <span id="toastMsg">Pesan akan muncul di sini.</span>
+    </div>
+
+    <!-- Overlay Pencarian -->
+    <div id="searchOverlay" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <button onclick="toggleSearch()" class="absolute top-8 right-8 text-white text-3xl hover:text-sky-400">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="w-full max-w-2xl text-center">
+            <h2 class="text-3xl font-bold mb-8 text-sky-400">Cari Berita Teknologi</h2>
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Ketik sesuatu (misal: AI, Quantum...)" 
+                    class="w-full bg-slate-800 border-2 border-sky-500/50 rounded-2xl px-8 py-5 text-xl text-white focus:outline-none focus:border-sky-500 transition shadow-2xl shadow-sky-500/10">
+                <button onclick="performSearch()" class="absolute right-4 top-4 bg-sky-500 p-3 rounded-xl hover:bg-sky-600 transition">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+            <p class="text-gray-400 mt-4">Tekan Enter atau klik panah untuk mencari.</p>
+        </div>
+    </div>
+
+    <!-- Navigasi -->
+    <nav class="sticky top-0 z-50 bg-[#0f172a]/80 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="showToast('Kembali ke Beranda')">
+                    <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-bolt text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">Tech<span class="text-sky-500">Node</span></span>
+                </div>
+                
+                <div class="hidden md:flex space-x-8">
+                    <a href="javascript:void(0)" onclick="showToast('Menuju Beranda')" class="nav-link text-sm font-medium hover:text-sky-400">Beranda</a>
+                    <a href="javascript:void(0)" onclick="showToast('Kategori: Gadget')" class="nav-link text-sm font-medium hover:text-sky-400">Gadget</a>
+                    <a href="javascript:void(0)" onclick="showToast('Kategori: Software')" class="nav-link text-sm font-medium hover:text-sky-400">Software</a>
+                    <a href="javascript:void(0)" onclick="showToast('Kategori: AI')" class="nav-link text-sm font-medium hover:text-sky-400">AI</a>
+                    <a href="javascript:void(0)" onclick="showToast('Kategori: Review')" class="nav-link text-sm font-medium hover:text-sky-400">Review</a>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSearch()" class="p-2 hover:bg-white/10 rounded-full transition text-gray-400 hover:text-sky-400">
+                        <i class="fas fa-search"></i>
+                    </button>
+                    <button onclick="showToast('Terima kasih telah berlangganan!')" class="bg-sky-500 hover:bg-sky-600 px-4 py-2 rounded-full text-sm font-semibold transition active:scale-95">
+                        Langganan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Hero Section -->
+        <section class="mb-12">
+            <div class="relative h-[450px] rounded-3xl overflow-hidden group">
+                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1200" alt="Hero Image" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                <div class="absolute bottom-0 p-8 md:p-12 w-full md:w-2/3">
+                    <span class="bg-sky-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Trending</span>
+                    <h1 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">Masa Depan Komputasi Quantum: Apa yang Perlu Anda Ketahui di 2024</h1>
+                    <p class="text-gray-300 mb-6 text-lg">Eksplorasi mendalam tentang bagaimana teknologi quantum akan mengubah cara kita memproses data secara global.</p>
+                    
+                    <!-- Profil Penulis dengan Media Sosial -->
+                    <div class="flex items-center gap-4">
+                        <img src="https://i.pravatar.cc/150?u=budi" class="w-12 h-12 rounded-full border-2 border-sky-500">
+                        <div>
+                            <p class="text-sm font-semibold">Budi Santoso</p>
+                            <div class="flex gap-3 mt-1">
+                                <a href="https://twitter.com" target="_blank" class="text-gray-400 hover:text-sky-400 text-xs transition"><i class="fab fa-twitter"></i> @buditech</a>
+                                <a href="https://linkedin.com" target="_blank" class="text-gray-400 hover:text-sky-400 text-xs transition"><i class="fab fa-linkedin"></i> Budi S.</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grid Berita -->
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h2 class="text-2xl font-bold">Berita Terbaru</h2>
+                <div class="h-1 w-12 bg-sky-500 mt-2 rounded-full"></div>
+            </div>
+            <button onclick="showToast('Menampilkan semua berita...')" class="text-sky-400 text-sm font-medium hover:underline">Lihat Semua <i class="fas fa-arrow-right ml-1"></i></button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            
+            <!-- Card 1 -->
+            <article class="glass-card rounded-2xl overflow-hidden flex flex-col group">
+                <div class="relative h-48 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=600" alt="News 1" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute top-4 left-4">
+                        <span class="bg-purple-600 text-[10px] font-bold px-2 py-1 rounded text-white uppercase">AI & Robotik</span>
+                    </div>
+                </div>
+                <div class="p-6 flex-grow">
+                    <h3 class="text-xl font-bold mb-3 hover:text-sky-400 transition cursor-pointer" onclick="showToast('Membuka artikel Robot AI...')">Robot Humanoid AI Kini Bisa Mempelajari Tugas Rumah Tangga</h3>
+                    <div class="flex items-center gap-2 mb-4">
+                        <img src="https://i.pravatar.cc/150?u=sara" class="w-6 h-6 rounded-full">
+                        <span class="text-xs text-gray-400">Oleh <span class="text-gray-200">Sara Wijaya</span></span>
+                        <a href="#" class="text-gray-500 hover:text-pink-400 transition text-xs"><i class="fab fa-instagram"></i></a>
+                    </div>
+                    <p class="text-gray-400 text-sm line-clamp-3">Generasi terbaru robot kini dilengkapi dengan neural network...</p>
+                </div>
+                <div class="px-6 pb-6 mt-auto flex justify-between items-center border-t border-white/5 pt-4">
+                    <span class="text-xs text-gray-500"><i class="far fa-clock mr-1"></i> 2 Jam lalu</span>
+                    <button onclick="bookmarkItem(this)" class="text-gray-500 hover:text-sky-400 transition"><i class="far fa-bookmark"></i></button>
+                </div>
+            </article>
+
+            <!-- Card 2 -->
+            <article class="glass-card rounded-2xl overflow-hidden flex flex-col group">
+                <div class="relative h-48 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=600" alt="News 2" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute top-4 left-4">
+                        <span class="bg-orange-600 text-[10px] font-bold px-2 py-1 rounded text-white uppercase">Hardware</span>
+                    </div>
+                </div>
+                <div class="p-6 flex-grow">
+                    <h3 class="text-xl font-bold mb-3 hover:text-sky-400 transition cursor-pointer" onclick="showToast('Membuka artikel Chipset 3nm...')">Chipset 3nm Terbaru Menjanjikan Efisiensi Baterai Hingga 40%</h3>
+                    <div class="flex items-center gap-2 mb-4">
+                        <img src="https://i.pravatar.cc/150?u=dika" class="w-6 h-6 rounded-full">
+                        <span class="text-xs text-gray-400">Oleh <span class="text-gray-200">Andika Pratama</span></span>
+                        <a href="#" class="text-gray-500 hover:text-sky-400 transition text-xs"><i class="fab fa-twitter"></i></a>
+                    </div>
+                    <p class="text-gray-400 text-sm line-clamp-3">Arsitektur chip terbaru siap mengubah standar performa laptop...</p>
+                </div>
+                <div class="px-6 pb-6 mt-auto flex justify-between items-center border-t border-white/5 pt-4">
+                    <span class="text-xs text-gray-500"><i class="far fa-clock mr-1"></i> 4 Jam lalu</span>
+                    <button onclick="bookmarkItem(this)" class="text-gray-500 hover:text-sky-400 transition"><i class="far fa-bookmark"></i></button>
+                </div>
+            </article>
+
+            <!-- Card 3 -->
+            <article class="glass-card rounded-2xl overflow-hidden flex flex-col group">
+                <div class="relative h-48 overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=600" alt="News 3" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute top-4 left-4">
+                        <span class="bg-green-600 text-[10px] font-bold px-2 py-1 rounded text-white uppercase">Software</span>
+                    </div>
+                </div>
+                <div class="p-6 flex-grow">
+                    <h3 class="text-xl font-bold mb-3 hover:text-sky-400 transition cursor-pointer" onclick="showToast('Membuka artikel Keamanan OS...')">Update OS Terbaru: Fitur Keamanan yang Wajib Anda Aktifkan</h3>
+                    <div class="flex items-center gap-2 mb-4">
+                        <img src="https://i.pravatar.cc/150?u=lia" class="w-6 h-6 rounded-full">
+                        <span class="text-xs text-gray-400">Oleh <span class="text-gray-200">Lia Amalia</span></span>
+                        <a href="#" class="text-gray-500 hover:text-blue-400 transition text-xs"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                    <p class="text-gray-400 text-sm line-clamp-3">Sistem operasi global merilis patch keamanan kritis...</p>
+                </div>
+                <div class="px-6 pb-6 mt-auto flex justify-between items-center border-t border-white/5 pt-4">
+                    <span class="text-xs text-gray-500"><i class="far fa-clock mr-1"></i> Kemarin</span>
+                    <button onclick="bookmarkItem(this)" class="text-gray-500 hover:text-sky-400 transition"><i class="far fa-bookmark"></i></button>
+                </div>
+            </article>
+
+        </div>
+
+        <!-- Section Jangkauan Dunia -->
+        <section class="mb-16">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-bold mb-2">Telah Menjangkau Dunia</h2>
+                <p class="text-gray-400">Kami menyebarkan wawasan teknologi ke seluruh penjuru planet.</p>
+            </div>
+            
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Stat 1 -->
+                <div class="stat-card p-8 rounded-3xl text-center flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 bg-sky-500/20 rounded-2xl flex items-center justify-center mb-4">
+                        <i class="fas fa-globe-americas text-sky-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-4xl font-bold text-white mb-1">150+</h4>
+                    <p class="text-gray-400 text-sm uppercase tracking-widest font-semibold">Negara</p>
+                </div>
+                
+                <!-- Stat 2 -->
+                <div class="stat-card p-8 rounded-3xl text-center flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 bg-sky-500/20 rounded-2xl flex items-center justify-center mb-4">
+                        <i class="fas fa-users text-sky-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-4xl font-bold text-white mb-1">2.5M</h4>
+                    <p class="text-gray-400 text-sm uppercase tracking-widest font-semibold">Pembaca Bulanan</p>
+                </div>
+
+                <!-- Stat 3 -->
+                <div class="stat-card p-8 rounded-3xl text-center flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 bg-sky-500/20 rounded-2xl flex items-center justify-center mb-4">
+                        <i class="fas fa-newspaper text-sky-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-4xl font-bold text-white mb-1">10K+</h4>
+                    <p class="text-gray-400 text-sm uppercase tracking-widest font-semibold">Artikel Terbit</p>
+                </div>
+
+                <!-- Stat 4 -->
+                <div class="stat-card p-8 rounded-3xl text-center flex flex-col items-center justify-center">
+                    <div class="w-12 h-12 bg-sky-500/20 rounded-2xl flex items-center justify-center mb-4">
+                        <i class="fas fa-language text-sky-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-4xl font-bold text-white mb-1">12</h4>
+                    <p class="text-gray-400 text-sm uppercase tracking-widest font-semibold">Bahasa Utama</p>
+                </div>
+            </div>
+
+            <!-- World Connection Visual -->
+            <div class="mt-12 relative p-12 rounded-3xl overflow-hidden bg-slate-900/50 border border-white/5 text-center">
+                <div class="absolute inset-0 opacity-10 pointer-events-none">
+                    <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200" alt="Koneksi Dunia" class="w-full h-full object-cover">
+                </div>
+                <h3 class="text-xl font-semibold mb-4 relative z-10 text-sky-300">Hubungkan Wawasan Tanpa Batas</h3>
+                <p class="text-gray-400 max-w-2xl mx-auto relative z-10">Dari Jakarta hingga New York, TechNode hadir untuk memastikan setiap orang memiliki akses ke berita teknologi paling mutakhir dan terpercaya.</p>
+            </div>
+        </section>
+
+        <!-- Newsletter Section -->
+        <section class="mt-16 bg-gradient-to-r from-sky-900/40 to-indigo-900/40 rounded-3xl p-8 md:p-12 border border-white/10 text-center">
+            <h2 class="text-3xl font-bold mb-4">Jangan Ketinggalan Berita Terbaru</h2>
+            <p class="text-gray-300 mb-8 max-w-2xl mx-auto">Dapatkan ringkasan berita teknologi terbaik langsung di kotak masuk Anda setiap Senin pagi.</p>
+            <form onsubmit="handleSubscribe(event)" class="flex flex-col md:flex-row gap-4 justify-center max-w-lg mx-auto">
+                <input type="email" id="newsletterEmail" required placeholder="Alamat email Anda" 
+                    class="bg-slate-950 border border-white/20 rounded-full px-6 py-3 flex-grow focus:outline-none focus:border-sky-500 transition">
+                <button type="submit" class="bg-sky-500 hover:bg-sky-600 px-8 py-3 rounded-full font-bold transition shadow-lg shadow-sky-500/20 active:scale-95">
+                    Gabung
+                </button>
+            </form>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 mt-16 py-12 bg-slate-950/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 text-center md:text-left">
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center justify-center md:justify-start gap-2 mb-4">
+                        <div class="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bolt text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold">Tech<span class="text-sky-500">Node</span></span>
+                    </div>
+                    <p class="text-gray-400 mb-6 max-w-sm mx-auto md:mx-0">Ikuti perkembangan teknologi masa depan bersama kami.</p>
+                    <div class="flex justify-center md:justify-start gap-4">
+                        <button onclick="showToast('Menuju Twitter')" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-sky-400 transition hover:text-slate-900"><i class="fab fa-twitter"></i></button>
+                        <button onclick="showToast('Menuju Facebook')" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-sky-600 transition"><i class="fab fa-facebook-f"></i></button>
+                        <button onclick="showToast('Menuju Instagram')" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-pink-500 transition"><i class="fab fa-instagram"></i></button>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6">Kategori</h4>
+                    <ul class="space-y-4 text-sm text-gray-400">
+                        <li><button onclick="showToast('Kategori: Smartphone')" class="hover:text-sky-400 transition">Smartphone</button></li>
+                        <li><button onclick="showToast('Kategori: AI')" class="hover:text-sky-400 transition">Kecerdasan Buatan</button></li>
+                        <li><button onclick="showToast('Kategori: Game')" class="hover:text-sky-400 transition">Gaming</button></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-6">Perusahaan</h4>
+                    <ul class="space-y-4 text-sm text-gray-400">
+                        <li><button onclick="showToast('Tentang Kami')" class="hover:text-sky-400 transition">Tentang Kami</button></li>
+                        <li><button onclick="showToast('Kebijakan Privasi')" class="hover:text-sky-400 transition">Kebijakan Privasi</button></li>
+                        <li><button onclick="showToast('Hubungi Kami')" class="hover:text-sky-400 transition">Kontak</button></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-white/5 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+                <p>&copy; 2024 TechNode Media Group. Dibuat dengan <i class="fas fa-heart text-red-500"></i> untuk edukasi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Fungsi untuk menampilkan notifikasi Toast
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.innerText = message;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // Fungsi Bookmark
+        function bookmarkItem(btn) {
+            const icon = btn.querySelector('i');
+            if (icon.classList.contains('far')) {
+                icon.classList.replace('far', 'fas');
+                icon.classList.add('text-sky-400');
+                showToast('Artikel berhasil disimpan!');
+            } else {
+                icon.classList.replace('fas', 'far');
+                icon.classList.remove('text-sky-400');
+                showToast('Hapus dari simpanan.');
+            }
+        }
+
+        // Fungsi Pencarian
+        function toggleSearch() {
+            const overlay = document.getElementById('searchOverlay');
+            overlay.style.display = (overlay.style.display === 'flex') ? 'none' : 'flex';
+            if (overlay.style.display === 'flex') {
+                document.getElementById('searchInput').focus();
+            }
+        }
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            if (query.trim() !== "") {
+                showToast(`Mencari untuk: "${query}"...`);
+                setTimeout(() => {
+                    toggleSearch();
+                    document.getElementById('searchInput').value = "";
+                }, 1000);
+            } else {
+                showToast("Masukkan kata kunci pencarian!");
+            }
+        }
+
+        // Newsletter
+        function handleSubscribe(e) {
+            e.preventDefault();
+            const email = document.getElementById('newsletterEmail').value;
+            showToast(`Berhasil! ${email} telah terdaftar.`);
+            document.getElementById('newsletterEmail').value = "";
+        }
+
+        // Deteksi Enter di Pencarian
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    </script>
+</body>
+</html>
